@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int     @id @default(autoincrement())
+  email          String  @unique
+  password       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt 
+
+  notes          Note[]
+  collaborators  Collaborator[]
+  tags           UserTag[]
+}
+
+model Note {
+  id             Int         @id @default(autoincrement())
+  title          String?       
+  content        String?      
+  isPinned       Boolean      @default(false) 
+  createdBy      Int       
+  color          String?      @default("") 
+  createdAt      DateTime     @default(now()) 
+  updatedAt      DateTime     @updatedAt  
+  reminder       DateTime?    
+  isArchived     Boolean      @default(false) 
+  isTodo         Boolean      @default(false) 
+ 
+  user           User         @relation(fields: [createdBy], references: [id], onDelete: Cascade) 
+  collaborators  Collaborator[]
+  tags           NoteTag[]
+  todoItems      TodoItem[]
+}
+
+model TodoItem {
+  id             Int     @id @default(autoincrement()) 
+  task           String   
+  isCompleted    Boolean  @default(false)
+  noteId         Int   
+  note           Note?     @relation(fields: [noteId], references: [id], onDelete: Cascade) 
+}
+
+model Collaborator {
+  id             Int    @id @default(autoincrement())
+  noteId         Int
+  userId         Int
+  user           User   @relation(fields: [userId], references: [id])
+  note           Note   @relation(fields: [noteId], references: [id], onDelete: Cascade) 
+
+  @@unique([noteId, userId])
+}
+
+model NoteTag {
+  id             Int    @id @default(autoincrement())
+  noteId         Int
+  tagId          Int
+  note           Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag            Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, tagId])
+}
+
+model Tag {
+  id             Int    @id @default(autoincrement())
+  name           String @unique
+
+  notes          NoteTag[]
+  userTags       UserTag[]
+}
+
+model UserTag {
+  id             Int    @id @default(autoincrement())
+  userId         Int
+  tagId          Int
+
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag            Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tagId])
+}
+
