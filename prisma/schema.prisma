@@ -16,11 +16,12 @@ model User {
 
   notes          Note[]
   collaborators  Collaborator[]
+  tags           UserTag[]
 }
 
 model Note {
   id             Int         @id @default(autoincrement())
-  title          String       
+  title          String?       
   content        String?      
   isPinned       Boolean      @default(false) 
   createdBy      Int       
@@ -50,7 +51,7 @@ model Collaborator {
   noteId         Int
   userId         Int
   user           User   @relation(fields: [userId], references: [id])
-  note           Note   @relation(fields: [noteId], references: [id])
+  note           Note   @relation(fields: [noteId], references: [id], onDelete: Cascade) 
 
   @@unique([noteId, userId])
 }
@@ -59,8 +60,8 @@ model NoteTag {
   id             Int    @id @default(autoincrement())
   noteId         Int
   tagId          Int
-  note           Note   @relation(fields: [noteId], references: [id])
-  tag            Tag    @relation(fields: [tagId], references: [id])
+  note           Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag            Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([noteId, tagId])
 }
@@ -70,5 +71,17 @@ model Tag {
   name           String @unique
 
   notes          NoteTag[]
+  userTags       UserTag[]
+}
+
+model UserTag {
+  id             Int    @id @default(autoincrement())
+  userId         Int
+  tagId          Int
+
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag            Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tagId])
 }
 

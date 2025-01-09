@@ -18,6 +18,9 @@ Thumbs.db
 # Prisma Migrate
 prisma/migrations/
 
+# prettier
+.prettierrc
+
 # IDE specific files
 .vscode/
 .idea/
