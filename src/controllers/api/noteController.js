@@ -1,10 +1,37 @@
+const { matchedData } = require("express-validator");
 const prisma = require("../../prisma/client");
 
 const getAllNotes = async (req, res) => {
   try {
+    const { tag, isArchived, isPinned } = req.query;
+
+    const whereClause = {
+      createdBy: +req.query.userId,
+    };
+
+    if (isArchived !== undefined) {
+      whereClause.isArchived = isArchived === "true";
+    }
+    if (isPinned !== undefined) {
+      whereClause.isPinned = isPinned === "true";
+    }
+
+    const tagFilter = tag
+      ? {
+          tags: {
+            some: {
+              tag: {
+                name: tag,
+              },
+            },
+          },
+        }
+      : null;
+
     const notes = await prisma.note.findMany({
       where: {
-        createdBy: +req.query.userId,
+        ...whereClause,
+        ...(tagFilter || {}),
       },
       include: {
         collaborators: {
@@ -32,7 +59,7 @@ const getAllNotes = async (req, res) => {
     });
 
     if (!notes || notes.length === 0) {
-      return res.status(404).json({ message: "No notes found" });
+      return res.status(404).json({ message: "Note not found" });
     }
 
     const formattedNotes = notes.map((note) => ({
@@ -47,6 +74,7 @@ const getAllNotes = async (req, res) => {
       notes: formattedNotes,
     });
   } catch (error) {
+    console.error("Error fetching notes:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching notes",
@@ -128,9 +156,7 @@ const createNote = async (req, res) => {
   } = req.body;
 
   try {
-    // Start a transaction for creating the note and related entries
     const result = await prisma.$transaction(async (tx) => {
-      // Step 1: Create the note
       const newNote = await tx.note.create({
         data: {
           title,
@@ -144,7 +170,6 @@ const createNote = async (req, res) => {
         },
       });
 
-      // Step 2: Create collaborators if provided
       if (collaborators.length > 0) {
         await tx.collaborator.createMany({
           data: collaborators.map((collaboratorId) => ({
@@ -154,7 +179,6 @@ const createNote = async (req, res) => {
         });
       }
 
-      // Step 3: Create tags if provided
       if (tags.length > 0) {
         userId = +req.query.userId;
         for (const tagId of tags) {
@@ -173,7 +197,6 @@ const createNote = async (req, res) => {
         }
       }
 
-      // Step 4: Create todo items if provided
       if (isTodo && todoItems.length > 0) {
         await tx.todoItem.createMany({
           data: todoItems.map((item) => ({
@@ -229,7 +252,6 @@ const editNote = async (req, res) => {
     }
 
     const updatedNote = await prisma.$transaction(async (tx) => {
-      // Step 1: Update the note's main fields if provided
       const updatedFields = {};
 
       if (title !== undefined) updatedFields.title = title;
@@ -245,7 +267,6 @@ const editNote = async (req, res) => {
         data: updatedFields,
       });
 
-      // Step 2: Update collaborators if provided
       if (collaborators !== undefined) {
         await tx.collaborator.deleteMany({ where: { noteId } });
 
@@ -259,7 +280,6 @@ const editNote = async (req, res) => {
         }
       }
 
-      // Step 3: Update tags if provided
       if (tags !== undefined) {
         await tx.noteTag.deleteMany({ where: { noteId } });
 
@@ -281,7 +301,6 @@ const editNote = async (req, res) => {
         }
       }
 
-      // Step 4: Update todo items if provided
       if (todoItems !== undefined) {
         await tx.todoItem.deleteMany({ where: { noteId } });
 
