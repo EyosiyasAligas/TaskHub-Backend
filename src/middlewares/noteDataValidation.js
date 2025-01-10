@@ -22,8 +22,6 @@ const handleValidationErrors = (req, res, next) => {
   const content = req.body.content;
   const todoItems = req.body.todoItems;
 
-  // check if body is empty
-
   const bodyKeys = Object.keys(req.body);
   const allowedFields = [
     "title",
