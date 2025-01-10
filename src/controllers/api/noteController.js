@@ -1,4 +1,3 @@
-const { matchedData } = require("express-validator");
 const prisma = require("../../prisma/client");
 
 const getAllNotes = async (req, res) => {
@@ -9,10 +8,11 @@ const getAllNotes = async (req, res) => {
       createdBy: +req.query.userId,
     };
 
-    if (isArchived !== undefined) {
+    if (isArchived === "true" || isArchived === "false") {
       whereClause.isArchived = isArchived === "true";
     }
-    if (isPinned !== undefined) {
+
+    if (isPinned === "true" || isPinned === "false") {
       whereClause.isPinned = isPinned === "true";
     }
 
@@ -27,6 +27,8 @@ const getAllNotes = async (req, res) => {
           },
         }
       : null;
+
+    console.log("whereClause", whereClause);
 
     const notes = await prisma.note.findMany({
       where: {
