@@ -5,7 +5,7 @@ const getAllNotes = async (req, res) => {
     const { tag, isArchived, isPinned } = req.query;
 
     const whereClause = {
-      createdBy: +req.query.userId,
+      createdBy: req.user.id,
     };
 
     if (isArchived === "true" || isArchived === "false") {
@@ -91,7 +91,7 @@ const getNoteById = async (req, res) => {
 
     const note = await prisma.note.findFirst({
       where: {
-        createdBy: +req.query.userId,
+        createdBy: req.user.id,
         id: noteId,
       },
       include: {
@@ -157,7 +157,7 @@ const createNote = async (req, res) => {
         data: {
           title,
           content,
-          createdBy: +req.query.userId,
+          createdBy: req.user.id,
           color,
           reminder,
           isPinned,
@@ -176,7 +176,7 @@ const createNote = async (req, res) => {
       }
 
       if (tags.length > 0) {
-        userId = +req.query.userId;
+        userId = req.user.id;
         for (const tagId of tags) {
           const userTag = await tx.userTag.findUnique({
             where: { userId_tagId: { userId, tagId } },
@@ -236,7 +236,7 @@ const editNote = async (req, res) => {
   } = req.body;
 
   const noteId = +req.params.noteId;
-  const userId = +req.query.userId;
+  const userId = req.user.id;
 
   try {
     const existingNote = await prisma.note.findUnique({
