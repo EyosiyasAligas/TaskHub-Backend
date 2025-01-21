@@ -2,6 +2,7 @@ const router = require("express").Router();
 
 const authRoutes = require("./api/authRoutes");
 const noteRoutes = require("./api/noteRoutes");
+const tagRouter = require("./api/tagRoutes");
 const tokenValidation = require("../middlewares/tokenValidation");
 
 router.get("/api", (req, res) => {
@@ -10,6 +11,7 @@ router.get("/api", (req, res) => {
 
 router.use("/api", authRoutes);
 router.use("/api/note", tokenValidation, noteRoutes);
+router.use("/api/tags", tokenValidation, tagRouter);
 
 router.use((req, res) => {
   res.status(404).json({ message: "Route not found" });

@@ -5,7 +5,7 @@ const getAllNotes = async (req, res) => {
     const { tag, isArchived, isPinned } = req.query;
 
     const whereClause = {
-      createdBy: +req.query.userId,
+      createdBy: req.user.id,
     };
 
     if (isArchived === "true" || isArchived === "false") {
@@ -89,9 +89,9 @@ const getNoteById = async (req, res) => {
   try {
     const noteId = +req.params.noteId;
 
-    const notes = await prisma.note.findMany({
+    const note = await prisma.note.findFirst({
       where: {
-        createdBy: +req.query.userId,
+        createdBy: req.user.id,
         id: noteId,
       },
       include: {
@@ -119,20 +119,14 @@ const getNoteById = async (req, res) => {
       },
     });
 
-    if (!notes || notes.length === 0) {
+    if (!note) {
       return res.status(404).json({ message: "Note not found" });
     }
-
-    const formattedNote = notes.map((note) => ({
-      ...note,
-      collaborators: note.collaborators.map((collab) => collab.user),
-      tags: note.tags.map((noteTag) => noteTag.tag),
-    }));
 
     res.status(200).json({
       success: true,
       message: "Notes fetched successfully",
-      notes: formattedNote,
+      note: note,
     });
   } catch (error) {
     res.status(500).json({
@@ -163,7 +157,7 @@ const createNote = async (req, res) => {
         data: {
           title,
           content,
-          createdBy: +req.query.userId,
+          createdBy: req.user.id,
           color,
           reminder,
           isPinned,
@@ -182,7 +176,7 @@ const createNote = async (req, res) => {
       }
 
       if (tags.length > 0) {
-        userId = +req.query.userId;
+        userId = req.user.id;
         for (const tagId of tags) {
           const userTag = await tx.userTag.findUnique({
             where: { userId_tagId: { userId, tagId } },
@@ -242,7 +236,7 @@ const editNote = async (req, res) => {
   } = req.body;
 
   const noteId = +req.params.noteId;
-  const userId = +req.query.userId;
+  const userId = req.user.id;
 
   try {
     const existingNote = await prisma.note.findUnique({

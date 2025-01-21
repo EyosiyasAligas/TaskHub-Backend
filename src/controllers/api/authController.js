@@ -1,5 +1,7 @@
+require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
 const prisma = require("../../prisma/client");
 const config = require("../../config/config");
 
@@ -23,7 +25,7 @@ const register = async (req, res) => {
     });
 
     const token = jwt.sign({ id: user.id }, config.jwtSecret, {
-      expiresIn: "3d",
+      expiresIn: process.env.Access_Token_Expiry,
     });
 
     res.status(201).json({
@@ -55,7 +57,7 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id }, config.jwtSecret, {
-      expiresIn: "3d",
+      expiresIn: process.env.Access_Token_Expiry,
     });
 
     res.status(200).json({
