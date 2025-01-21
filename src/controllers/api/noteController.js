@@ -89,7 +89,7 @@ const getNoteById = async (req, res) => {
   try {
     const noteId = +req.params.noteId;
 
-    const notes = await prisma.note.findMany({
+    const note = await prisma.note.findFirst({
       where: {
         createdBy: +req.query.userId,
         id: noteId,
@@ -119,20 +119,14 @@ const getNoteById = async (req, res) => {
       },
     });
 
-    if (!notes || notes.length === 0) {
+    if (!note) {
       return res.status(404).json({ message: "Note not found" });
     }
-
-    const formattedNote = notes.map((note) => ({
-      ...note,
-      collaborators: note.collaborators.map((collab) => collab.user),
-      tags: note.tags.map((noteTag) => noteTag.tag),
-    }));
 
     res.status(200).json({
       success: true,
       message: "Notes fetched successfully",
-      notes: formattedNote,
+      note: note,
     });
   } catch (error) {
     res.status(500).json({

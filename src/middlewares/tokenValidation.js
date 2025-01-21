@@ -23,7 +23,7 @@ const tokenValidation = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (userId != req.query.userId) {
+    if (req.query.userId && userId != req.query.userId) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
